@@ -15,14 +15,15 @@ jobs:
           name: Run unit tests
           command: pytest tests/ -v
 
-  # ── JOB 2: Build & Push Docker Image ──────────
+  
+   # ── JOB 2: Build & Push Docker Image ──────────
   build-and-push:
     docker:
       - image: cimg/base:stable
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.14
+          docker_layer_caching: false
       - run:
           name: Build Docker image
           command: |
