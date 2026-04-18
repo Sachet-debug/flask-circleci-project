@@ -1,0 +1,58 @@
+version: 2.1
+
+jobs:
+
+  # ── JOB 1: Run Tests ──────────────────────────
+  test:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements.txt
+      - run:
+          name: Run unit tests
+          command: pytest tests/ -v
+
+  # ── JOB 2: Build & Push Docker Image ──────────
+  build-and-push:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t $DOCKER_USERNAME/flask-devops-app:latest .
+            docker build -t $DOCKER_USERNAME/flask-devops-app:$CIRCLE_SHA1 .
+      - run:
+          name: Login & push to Docker Hub
+          command: |
+            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+            docker push $DOCKER_USERNAME/flask-devops-app:latest
+            docker push $DOCKER_USERNAME/flask-devops-app:$CIRCLE_SHA1
+
+  # ── JOB 3: Deploy to Render ───────────────────
+  deploy:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Trigger deployment on Render
+          command: |
+            curl -X POST $RENDER_DEPLOY_HOOK_URL
+
+# ── WORKFLOW: defines job order ────────────────
+workflows:
+  ci-cd-pipeline:
+    jobs:
+      - test
+      - build-and-push:
+          requires:
+            - test          # runs only if test passes ✅
+      - deploy:
+          requires:
+            - build-and-push  # runs only if build passes ✅
