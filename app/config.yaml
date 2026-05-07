@@ -1,6 +1,6 @@
 app:
   message: "Hello from DevOps Project!"
-  version: "3.0.0"
+  version: "4.0.0"
   author: "Your Name Here"
   environment: "production"
 
