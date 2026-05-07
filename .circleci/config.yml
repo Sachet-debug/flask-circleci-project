@@ -57,7 +57,7 @@ jobs:
             curl -X POST $SLACK_WEBHOOK_URL \
             -H 'Content-type: application/json' \
             --data "{
-              \"text\": \"🚀 *Deployment Successful!*\n*Project:* Flask DevOps App\n*Triggered by:* config.yaml change\n*Branch:* $CIRCLE_BRANCH\n*Build:* #$CIRCLE_BUILD_NUM\n*Status:* All tests passed ✅\n*Live URL:* https://your-app.onrender.com\"
+              \"text\": \"🚀 *Deployment Successful!*\n*Project:* Flask DevOps App\n*Triggered by:* config.yaml change\n*Branch:* $CIRCLE_BRANCH\n*Build:* #$CIRCLE_BUILD_NUM\n*Status:* All tests passed ✅\n*Live URL:* https://flask-circleci-project.onrender.com\"
             }"
 
 # ── WORKFLOW ───────────────────────────────────
