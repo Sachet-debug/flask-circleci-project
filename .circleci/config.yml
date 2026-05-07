@@ -15,8 +15,6 @@ jobs:
           name: Run unit tests
           command: pytest tests/ -v
 
-  
-   
   # ── JOB 2: Build & Push Docker Image ──────────
   build-and-push:
     docker:
@@ -31,13 +29,10 @@ jobs:
             IMAGE_NAME="$DOCKER_USERNAME/flask-devops-app"
             docker build -t "$IMAGE_NAME:latest" -t "$IMAGE_NAME:$CIRCLE_SHA1" .
       - run:
-          name: Login to Docker Hub
-          command: |
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-      - run:
-          name: Push to Docker Hub
+          name: Login & push to Docker Hub
           command: |
             IMAGE_NAME="$DOCKER_USERNAME/flask-devops-app"
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
             docker push "$IMAGE_NAME:latest"
             docker push "$IMAGE_NAME:$CIRCLE_SHA1"
 
@@ -51,14 +46,31 @@ jobs:
           command: |
             curl -X POST $RENDER_DEPLOY_HOOK_URL
 
-# ── WORKFLOW: defines job order ────────────────
+  # ── JOB 4: Send Slack Notification ───────────
+  notify:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Send Slack Notification
+          command: |
+            curl -X POST $SLACK_WEBHOOK_URL \
+            -H 'Content-type: application/json' \
+            --data "{
+              \"text\": \"🚀 *Deployment Successful!*\n*Project:* Flask DevOps App\n*Triggered by:* config.yaml change\n*Branch:* $CIRCLE_BRANCH\n*Build:* #$CIRCLE_BUILD_NUM\n*Status:* All tests passed ✅\n*Live URL:* https://your-app.onrender.com\"
+            }"
+
+# ── WORKFLOW ───────────────────────────────────
 workflows:
   ci-cd-pipeline:
     jobs:
       - test
       - build-and-push:
           requires:
-            - test          # runs only if test passes ✅
+            - test
       - deploy:
           requires:
-            - build-and-push  # runs only if build passes ✅
+            - build-and-push
+      - notify:
+          requires:
+            - deploy
